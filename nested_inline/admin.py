@@ -9,12 +9,38 @@ from django.utils.decorators import method_decorator
 from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_protect
 from django.utils.translation import ugettext as _
-from django.contrib.admin.utils import unquote
 from django.db import transaction, models
 from django.utils.html import escape
 from django.conf import settings
 from django import forms
 from django.contrib.admin.templatetags.admin_static import static
+
+
+try:
+    from django.contrib.admin.utils import unquote
+except ImportError:
+    #   django.contrib.admin.utils introduced in django1.7
+    #   taken from https://github.com/django/django/blob/master/django/contrib/admin/utils.py#L76
+    def unquote(s):
+        """
+        Undo the effects of quote(). Based heavily on urllib.unquote().
+        """
+        mychr = chr
+        myatoi = int
+        list = s.split('_')
+        res = [list[0]]
+        myappend = res.append
+        del list[0]
+        for item in list:
+            if item[1:2]:
+                try:
+                    myappend(mychr(myatoi(item[:2], 16)) + item[2:])
+                except ValueError:
+                    myappend('_' + item)
+            else:
+                myappend('_' + item)
+        return "".join(res)
+
 
 csrf_protect_m = method_decorator(csrf_protect)
 
